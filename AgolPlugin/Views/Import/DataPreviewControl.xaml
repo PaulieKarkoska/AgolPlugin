@@ -1,0 +1,33 @@
+﻿<UserControl x:Class="AgolPlugin.Views.Import.DataPreviewControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:AgolPlugin.Views.Import"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="400"
+             xmlns:models="clr-namespace:AgolPlugin.Models.Agol"
+             xmlns:cmodels="clr-namespace:AgolPlugin.Models.Common"
+             xmlns:validation="clr-namespace:AgolPlugin.Validation.Acad"
+             xmlns:vm="clr-namespace:AgolPlugin.ViewModels.Import"
+             xmlns:metro="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:converters="clr-namespace:AgolPlugin.Converters.Xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DataContext="{d:DesignInstance vm:DataPreviewViewModel}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <converters:BoolToVisibilityConverter x:Key="boolToVisConverter"/>
+            <converters:NullToVisConverter x:Key="nullToVisConverter"/>
+            <converters:AcadBrushConverter x:Key="AcadBrushConverter"/>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Blue.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+            
+    </Grid>
+</UserControl>

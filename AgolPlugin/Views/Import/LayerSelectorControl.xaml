@@ -1,0 +1,736 @@
+﻿<UserControl x:Class="AgolPlugin.Views.Import.LayerSelectorControl"
+             xmlns:metro="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:AgolPlugin.Views.Import"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="400"
+             xmlns:models="clr-namespace:AgolPlugin.Models.Agol"
+             xmlns:vm="clr-namespace:AgolPlugin.ViewModels.Import"
+             xmlns:helpers="clr-namespace:AgolPlugin.Helpers"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:converters="clr-namespace:AgolPlugin.Converters.Xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DataContext="{d:DesignInstance vm:LayerSelectorViewModel}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <converters:BoolToVisibilityConverter x:Key="boolToVisConverter"/>
+            <converters:NullToVisConverter x:Key="nullToVisConverter"/>
+            <converters:AcadBrushConverter x:Key="AcadBrushConverter"/>
+            <converters:BoolInverter x:Key="boolInverter"/>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Blue.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Expander metro:ControlsHelper.ContentCharacterCasing="Normal"
+                  BorderThickness="1"
+                  Grid.ColumnSpan="2"
+                  Margin="0 0 0 5"
+                  BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}">
+            <Expander.Header>
+                <Grid>
+                    <TextBlock Text="Query Parameters"/>
+                    <Button Grid.Row="2" Style="{StaticResource MahApps.Styles.Button.Chromeless}" HorizontalAlignment="Right" Margin="0 2 0 0" ToolTip="Add New Field Filter"
+                        Command="{Binding NewFieldFilter_Command}"
+                            Padding="0 0 5 0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <icons:PackIconMaterial Kind="Plus" VerticalAlignment="Center" Margin="0 0 5 0"/>
+                            <TextBlock Text="Add Filter" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Expander.Header>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Output Spatial Reference" Foreground="{DynamicResource MahApps.Brushes.Gray3}" TextWrapping="Wrap" Margin="0 0 0 3"/>
+                    <ComboBox ItemsSource="{Binding OutputSrids}"
+                              SelectedIndex="0"
+                              Grid.Row="1"
+                              SelectedItem="{Binding OutputSrid}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Value, Mode=OneWay}" Margin="0 0 5 0"/>
+                                    <TextBlock Text="{Binding Key, Mode=OneWay,StringFormat='[{0}]'}" Foreground="{DynamicResource MahApps.Brushes.Gray3}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <TextBlock Text="Use Feet Elevation" Foreground="{DynamicResource MahApps.Brushes.Gray3}" Grid.Column="1" TextWrapping="Wrap" Margin="0 0 0 3"/>
+                    <CheckBox IsChecked="{Binding ConvertElevationMetersToFeet}" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock Text="Top-Layer Field Filters" Foreground="{DynamicResource MahApps.Brushes.Gray3}" TextWrapping="Wrap" Grid.Row="2" Margin="0 5 0 3"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="True"
+                              Grid.Row="3"
+                              MaxHeight="105">
+                    <ItemsControl ItemsSource="{Binding FieldFilters}" x:Name="FieldFilterItemsControl" Margin="0 0 0 -3">
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="FrameworkElement.Margin" Value="0 0 0 3"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.Resources>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource MahApps.Styles.ComboBox}" x:Key="StringOperatorBox">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FieldType}" Value="string">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding FieldType}" Value="guid">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource MahApps.Styles.ComboBox}" x:Key="ValueOperatorBox">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FieldType}" Value="string">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding FieldType}" Value="guid">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}" x:Key="StringStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="False"/>
+                                            <Condition Binding="{Binding FieldType}" Value="string"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="False"/>
+                                            <Condition Binding="{Binding FieldType}" Value="guid"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="metro:NumericUpDown" x:Key="IntStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Setter Property="Interval" Value="1"/>
+                                <Setter Property="SnapToMultipleOfInterval" Value="True"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="False"/>
+                                            <Condition Binding="{Binding FieldType}" Value="int"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="metro:NumericUpDown" x:Key="DecStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="False"/>
+                                            <Condition Binding="{Binding FieldType}" Value="dec"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="metro:DateTimePicker" x:Key="DateStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Setter Property="Culture" Value="en-IN"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="False"/>
+                                            <Condition Binding="{Binding FieldType}" Value="date"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="metro:NumericUpDown" x:Key="IntRangeStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="True"/>
+                                            <Condition Binding="{Binding FieldType}" Value="int"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="metro:NumericUpDown" x:Key="DecRangeStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="True"/>
+                                            <Condition Binding="{Binding FieldType}" Value="dec"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="metro:DateTimePicker" x:Key="DateRangeStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Setter Property="Culture" Value="en-IN"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Operator.IsRange}" Value="True"/>
+                                            <Condition Binding="{Binding FieldType}" Value="date"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="TextBlock" x:Key="SepStyle">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Operator.IsRange}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.Resources>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:FieldFilter}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox ItemsSource="{Binding Path=DataContext.FieldFilterNames, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                              SelectedIndex="0"
+                                              SelectionChanged="FieldFilterSelector_SelectionChanged" metro:TextBoxHelper.Watermark="Field">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Item1}"/>
+                                                    <TextBlock Text="{Binding Item2, StringFormat='[{0}]'}" Foreground="{DynamicResource MahApps.Brushes.Gray3}" Margin="5 0 0 0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+
+                                    <!--String Operators-->
+                                    <ComboBox ItemsSource="{Binding Path=DataContext.StringFilterOperators, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                              SelectedIndex="0"
+                                              SelectedItem="{Binding Operator}" Grid.Column="1" Margin="5 0"
+                                              SelectionChanged="OperatorBox_SelectionChanged"
+                                              Style="{StaticResource StringOperatorBox}"/>
+
+                                    <!--Value Operators-->
+                                    <ComboBox ItemsSource="{Binding Path=DataContext.ValueFilterOperators, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                              SelectedIndex="0"
+                                              SelectedItem="{Binding Operator}" Grid.Column="1" Margin="5 0"
+                                              SelectionChanged="OperatorBox_SelectionChanged"
+                                              Style="{StaticResource ValueOperatorBox}"/>
+
+                                    <!--String-->
+                                    <TextBox Text="{Binding Value1}" Grid.Column="2" Grid.ColumnSpan="3" Style="{StaticResource StringStyle}"/>
+                                    <!--Int-->
+                                    <metro:NumericUpDown Value="{Binding Value1}" Grid.Column="2" Grid.ColumnSpan="3" Style="{StaticResource IntStyle}"/>
+                                    <!--Dec-->
+                                    <metro:NumericUpDown Value="{Binding Value1}" Grid.Column="2" Grid.ColumnSpan="3" Style="{StaticResource DecStyle}"/>
+                                    <!--Date-->
+                                    <metro:DateTimePicker x:Name="Date" Grid.Column="2" Grid.ColumnSpan="3" metro:TextBoxHelper.Watermark="Min Date" SelectedDateTime="{Binding Value1}" Style="{StaticResource DateStyle}"/>
+
+                                    <!--Rng Sep-->
+                                    <TextBlock Text="AND" Margin="5 0" Grid.Column="3" VerticalAlignment="Center" Style="{StaticResource SepStyle}"/>
+
+                                    <!--IntRange-->
+                                    <metro:NumericUpDown x:Name="MinIntBox" Value="{Binding Value1}" Grid.Column="2" Style="{StaticResource IntRangeStyle}"/>
+                                    <metro:NumericUpDown Value="{Binding Value2}" Maximum="{Binding ElementName=MinDecBox, Path=Value}" Grid.Column="4" Style="{StaticResource IntRangeStyle}"/>
+
+                                    <!--DecRange-->
+                                    <metro:NumericUpDown x:Name="MinDecBox" Value="{Binding Value1}" Grid.Column="2" Style="{StaticResource DecRangeStyle}"/>
+                                    <metro:NumericUpDown Value="{Binding Value2}" Maximum="{Binding ElementName=MinDecBox, Path=Value}" Grid.Column="4" Style="{StaticResource DecRangeStyle}"/>
+
+                                    <!--DateRange-->
+                                    <metro:DateTimePicker x:Name="MinDateBox" Grid.Column="2" metro:TextBoxHelper.Watermark="Min Date" SelectedDateTime="{Binding Value1}" Style="{StaticResource DateRangeStyle}"/>
+                                    <metro:DateTimePicker Grid.Column="4" metro:TextBoxHelper.Watermark="Max Date" SelectedDateTime="{Binding Value2}" Style="{StaticResource DateRangeStyle}"/>
+
+                                    <!--Style="{StaticResource MahApps.Styles.Button.Chromeless}"-->
+                                    <Button Grid.Column="5" Margin="5 0 0 0"
+                                            Padding="5 0"
+                                            MaxHeight="26"
+                                            MinHeight="26"
+                                            BorderThickness="0"
+                                            Command="{Binding Path=DataContext.DeleteFieldFilter_Command, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
+                                            ToolTip="Delete this filter">
+                                        <icons:PackIconMaterial Kind="Close"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Expander>
+        <Border BorderThickness="1"
+                Grid.Row="1"
+                Grid.ColumnSpan="2"
+                Background="{DynamicResource MahApps.Brushes.Accent}"
+                BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}">
+            <Grid>
+                <Label Content="Schema"/>
+            </Grid>
+        </Border>
+
+        <ListBox ItemsSource="{Binding LayerConfigurators}"
+                 SelectedItem="{Binding SelectedLayerConfig, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                 Grid.Row="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid VerticalAlignment="Center"
+                          TextElement.FontSize="16"
+                          Margin="0 0 5 0"
+                              DataContext="{Binding}">
+                        <Grid.ToolTip>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Feature.Id, StringFormat='Layer ID: {0}'}"/>
+                            </StackPanel>
+                        </Grid.ToolTip>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <icons:PackIconBoxIcons Margin="0 0 5 0"
+                                                VerticalAlignment="Center">
+                            <icons:PackIconBoxIcons.Style>
+                                <Style TargetType="icons:PackIconBoxIcons">
+                                    <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Feature.FeatureType}" Value="Feature Layer">
+                                            <Setter Property="Kind" Value="SolidLayer"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Feature.FeatureType}" Value="Table">
+                                            <Setter Property="Kind" Value="RegularTable"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </icons:PackIconBoxIcons.Style>
+                        </icons:PackIconBoxIcons>
+                        <TextBlock Text="{Binding Feature.Name}" Grid.Column="1" VerticalAlignment="Center"/>
+                        <metro:ProgressRing Height="10" Width="10"
+                                                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border BorderThickness="1 0 0 0"
+                Grid.Row="2" Grid.Column="1"
+                BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}">
+            <Grid>
+                <TextBlock Text="Select a feature to modify its import configuration"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Margin="20"
+                           Foreground="{DynamicResource MahApps.Brushes.Gray3}"
+                           Visibility="{Binding SelectedLayerConfig, Converter={StaticResource nullToVisConverter}}"/>
+
+                <Grid Margin="5 5 0 0"
+                      DataContext="{Binding SelectedLayerConfig, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding FeatureType}" Value="Feature Layer">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding FeatureType}" Value="Table">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.Resources>
+                        <Style TargetType="TextBlock" x:Key="Header">
+                            <Setter Property="TextElement.FontSize" Value="11"/>
+                            <Setter Property="Margin" Value="0 5 0 0"/>
+                            <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.Gray7}"/>
+                        </Style>
+                        <Style TargetType="TextBlock" x:Key="Value">
+                            <Setter Property="Margin" Value="0 -3 0 0"/>
+                            <Setter Property="TextElement.FontSize" Value="15"/>
+                        </Style>
+                    </Grid.Resources>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Expander metro:ControlsHelper.ContentCharacterCasing="Normal"
+                              IsExpanded="False"
+                              BorderThickness="1"
+                              BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}">
+                        <Expander.Header>
+                            <Grid>
+                                <TextBlock>
+                                    "<Run Text="{Binding Feature.Name}"/>" <Run Text="{Binding Feature.FeatureType, StringFormat='{}{0} Information'}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding Feature.Id, StringFormat='ID: {0}'}"
+                                           HorizontalAlignment="Right"
+                                           Margin="0 0 5 0"/>
+                            </Grid>
+                        </Expander.Header>
+                        <StackPanel>
+                            <TextBlock Text="Name" Style="{StaticResource Header}" Margin="0 -2 0 0"/>
+                            <TextBlock Text="{Binding Feature.Name}" Style="{StaticResource Value}"/>
+                            <TextBlock Text="Field Count" Style="{StaticResource Header}"/>
+                            <TextBlock Text="{Binding Feature.Fields.Count}" Style="{StaticResource Value}"/>
+                            <TextBlock Text="Global ID Field Name" Style="{StaticResource Header}"/>
+                            <TextBlock Text="{Binding Feature.GlobalIdField}" Style="{StaticResource Value}"/>
+                            <TextBlock Text="Object ID Field Name" Style="{StaticResource Header}"/>
+                            <TextBlock Text="{Binding Feature.ObjectIdField}" Style="{StaticResource Value}"/>
+                        </StackPanel>
+                    </Expander>
+
+                    <Expander metro:ControlsHelper.ContentCharacterCasing="Normal"
+                              Header="Configuration"
+                              Grid.Row="1"
+                              BorderThickness="1"
+                              Margin="0 5 0 0"
+                              BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}">
+                        <Expander.Style>
+                            <Style TargetType="Expander" BasedOn="{StaticResource MahApps.Styles.Expander}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Feature.FeatureType}" Value="Table">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Expander.Style>
+                        <Expander.Resources>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Header}" x:Key="BoxHeader">
+                                <Setter Property="Margin" Value="0 5 0 1"/>
+                            </Style>
+                        </Expander.Resources>
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="AutoCAD Layer Name" Style="{StaticResource BoxHeader}" Margin="0 -2 0 1"/>
+                                    <TextBox IsReadOnly="True" Text="{Binding AcadLayerName}" MaxLength="255" metro:TextBoxHelper.Watermark="AutoCAD Layer Name"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="5 0 0 0">
+                                    <TextBlock Text="AutoCAD Layer Color" Style="{StaticResource BoxHeader}" Margin="0 -2 0 1"/>
+                                    <Border BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Button.Border}"
+                                                            CornerRadius="3">
+                                        <Button Height="24" Command="{Binding SelectAcadLayerColor_Command}"
+                                                Background="{Binding AcadLayerColor, Mode=OneWay, Converter={StaticResource AcadBrushConverter}}"
+                                                Padding="0"
+                                                metro:ControlsHelper.CornerRadius="3"
+                                                HorizontalContentAlignment="Center"
+                                                VerticalContentAlignment="Center">
+                                            <Button.ToolTip>
+                                                <TextBlock Text="{Binding AcadLayerColor.ColorValue.Name, StringFormat='#{0}'}" FontSize="14"/>
+                                            </Button.ToolTip>
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button.Flat}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Opacity" Value="0.8"/>
+                                                            <Setter Property="Background" Value="{Binding AcadLayerColor, Mode=OneWay, Converter={StaticResource AcadBrushConverter}}"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Border CornerRadius="5"
+                                                    Background="{DynamicResource MahApps.Brushes.Gray7}">
+                                                <Label Content="{Binding AcadLayerColor.ColorNameForDisplay, Mode=OneWay, StringFormat='#{0}'}"
+                                                       BorderThickness="0"
+                                                       FontSize="14"
+                                                       FontWeight="Normal"
+                                                       Padding="4 0"
+                                                       Margin="0"/>
+                                            </Border>
+                                        </Button>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0 6 0 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="AutoCAD Block Name" Style="{StaticResource BoxHeader}" Margin="0 -2 0 1"/>
+                                    <TextBox IsReadOnly="True" Text="{Binding NewAcadBlockName}" MaxLength="255" metro:TextBoxHelper.Watermark="AutoCAD Block Name"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="5 0 0 0">
+                                    <TextBlock Text="AutoCAD Block Color" Style="{StaticResource BoxHeader}" Margin="0 -2 0 1"/>
+                                    <Border BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Button.Border}"
+                                                            CornerRadius="3">
+                                        <Button Height="24" Command="{Binding SelectAcadBlockColor_Command}"
+                                                Background="{Binding NewAcadBlockColor, Mode=OneWay, Converter={StaticResource AcadBrushConverter}}"
+                                                Padding="0"
+                                                metro:ControlsHelper.CornerRadius="3"
+                                                HorizontalContentAlignment="Center"
+                                                VerticalContentAlignment="Center">
+                                            <Button.ToolTip>
+                                                <TextBlock Text="{Binding NewAcadBlockColor.ColorValue.Name, StringFormat='#{0}'}" FontSize="14"/>
+                                            </Button.ToolTip>
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button.Flat}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Opacity" Value="0.8"/>
+                                                            <Setter Property="Background" Value="{Binding NewAcadBlockColor, Mode=OneWay, Converter={StaticResource AcadBrushConverter}}"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Border CornerRadius="5"
+                                                    Background="{DynamicResource MahApps.Brushes.Gray7}">
+                                                <Label Content="{Binding NewAcadBlockColor.ColorNameForDisplay, Mode=OneWay, StringFormat='#{0}'}"
+                                                       BorderThickness="0"
+                                                       FontSize="14"
+                                                       FontWeight="Normal"
+                                                       Padding="4 0"
+                                                       Margin="0"/>
+                                            </Border>
+                                        </Button>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Block Property Sort" Style="{StaticResource BoxHeader}" />
+                            <ComboBox SelectedIndex="0" SelectionChanged="BlockPropertySortComboBox_SelectionChanged">
+                                <sys:String>None</sys:String>
+                                <sys:String>Alias</sys:String>
+                                <sys:String>Alias, Descending</sys:String>
+                                <sys:String>Name</sys:String>
+                                <sys:String>Name, Descending</sys:String>
+                            </ComboBox>
+
+                        </StackPanel>
+                    </Expander>
+
+                    <Border BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
+                            Background="{DynamicResource MahApps.Brushes.Accent}"
+                            Grid.Row="2"
+                            Margin="0 5 0 0">
+                        <Grid>
+                            <Label Content="Fields"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                        Margin="0 0 5 0">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Feature.FeatureType}" Value="Table">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <Button Style="{StaticResource MahApps.Styles.Button.Chromeless}"
+                                        Command="{Binding SelectMappings_Command}" CommandParameter="Off"
+                                        ToolTip="Toggle OFF all fields">
+                                    <icons:PackIconBoxIcons Kind="RegularToggleLeft"/>
+                                </Button>
+                                <TextBlock Text=" / " FontSize="16" 
+                                        Foreground="{DynamicResource MahApps.Brushes.IdealForeground}" />
+                                <Button Style="{StaticResource MahApps.Styles.Button.Chromeless}"
+                                        Command="{Binding SelectMappings_Command}" CommandParameter="On"
+                                        ToolTip="Toggle ON all fields">
+                                    <icons:PackIconBoxIcons Kind="SolidToggleRight"/>
+                                </Button>
+                                <Button Style="{DynamicResource MahApps.Styles.Button.Chromeless}"
+                                        Command="{Binding DeselectAllLabels_Command}"
+                                        Margin="10 0 0 0"
+                                        ToolTip="Clear label radio button">
+                                    <Grid>
+                                        <icons:PackIconMaterialDesign Kind="RadioButtonUnchecked"/>
+                                        <icons:PackIconFeatherIcons Kind="X"/>
+                                    </Grid>
+
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <TextBox Grid.Row="3" Margin="0 5 0 0"
+                             Text="{Binding MappingsFilterText, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                             metro:TextBoxHelper.Watermark="Field Search">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
+                                <Setter Property="metro:TextBoxHelper.ClearTextButton" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MappingsFilterText}" Value="">
+                                        <Setter Property="metro:TextBoxHelper.ClearTextButton" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+
+                    <ScrollViewer Grid.Row="4"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Mappings}">
+                            <ItemsControl.ItemContainerStyle>
+                                <Style>
+                                    <Setter Property="FrameworkElement.Margin" Value="0 5 0 0"/>
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Background="{DynamicResource MahApps.Brushes.Gray10}"
+                                          TextElement.Foreground="{DynamicResource MahApps.Brushes.IdealForeground}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <metro:ToggleSwitch IsOn="{Binding Include}" Margin="5" OffContent="" OnContent="" Width="44"
+                                                            IsEnabled="{Binding CanDisable}">
+                                            <metro:ToggleSwitch.Style>
+                                                <Style TargetType="metro:ToggleSwitch">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Feature.FeatureType}" Value="Table">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </metro:ToggleSwitch.Style>
+                                            <metro:ToggleSwitch.LayoutTransform>
+                                                <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
+                                            </metro:ToggleSwitch.LayoutTransform>
+                                        </metro:ToggleSwitch>
+                                        <icons:PackIconMaterial Kind="KeyVariant" VerticalAlignment="Center" Grid.Column="1"
+                                                                Background="#00000000">
+                                            <icons:PackIconMaterial.Style>
+                                                <Style TargetType="icons:PackIconMaterial">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsGlobalId}" Value="True">
+                                                            <Setter Property="Foreground" Value="Gold"/>
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="ToolTip" Value="Field is required because it is the global identifier"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsObjectId}" Value="True">
+                                                            <Setter Property="Foreground" Value="Silver"/>
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="ToolTip" Value="Field is required because it is the object identifier"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </icons:PackIconMaterial.Style>
+                                        </icons:PackIconMaterial>
+                                        <StackPanel Grid.Column="2" Margin="5">
+                                            <TextBlock Text="{Binding Field.Alias}" FontSize="14"/>
+                                            <TextBlock Text="{Binding Field.Name}" Foreground="{DynamicResource MahApps.Brushes.Gray7}" FontSize="11" Margin="0 -3 0 0"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Margin="5 -5 5 0" HorizontalAlignment="Right" 
+                                                    VerticalAlignment="Center"
+                                                    Background="{DynamicResource MahApps.Brushes.Gray10}"
+                                                    ToolTip="Use this field as the block display label">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Feature.FeatureType}" Value="Table">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <TextBlock Text="Label" FontSize="10"
+                                                       Margin="5 0 0 0"
+                                                       FontStyle="Italic"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource MahApps.Brushes.Gray9}"
+                                                       VerticalAlignment="Center"/>
+                                            <RadioButton IsChecked="{Binding UseAsBlockLabel}"
+                                                         Margin="5 0 0 0"
+                                                         Background="#00000000"
+                                                         Padding="0"
+                                                         Grid.Column="3"
+                                                         HorizontalAlignment="Center"
+                                                         GroupName="UseAsBlockName"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <metro:ProgressRing IsActive="{Binding IsBusy}" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Border BorderThickness="0 0 0 1"
+                Grid.Row="2"
+                Grid.ColumnSpan="2"
+                BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
+                />
+        <Button Style="{StaticResource MahApps.Styles.Button.Chromeless}"
+                Command="{Binding BeginImport_Command}"
+                Grid.Row="3"
+                Grid.Column="1"
+                Padding="0 10 10 5"
+                HorizontalAlignment="Right"
+                Background="#00000000">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Begin Import"/>
+                <icons:PackIconMaterialLight Kind="ChevronRight"/>
+            </StackPanel>
+        </Button>
+    </Grid>
+</UserControl>

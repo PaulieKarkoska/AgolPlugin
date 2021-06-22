@@ -1,0 +1,238 @@
+﻿<UserControl x:Class="AgolPlugin.Views.Import.SearchControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:AgolPlugin.Views.Import"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="400"
+             xmlns:vm="clr-namespace:AgolPlugin.ViewModels.Import"
+             xmlns:models="clr-namespace:AgolPlugin.Models.Agol"
+             xmlns:metro="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:converters="clr-namespace:AgolPlugin.Converters.Xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DataContext="{d:DesignInstance vm:SearchViewModel}"
+             Background="{DynamicResource MahApps.Brushes.ThemeBackground}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <converters:BoolToVisibilityConverter x:Key="boolToVisConverter"/>
+            <converters:NullToVisConverter x:Key="nullToVisConverter"/>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Blue.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Expander Header="Query"
+                  metro:ControlsHelper.ContentCharacterCasing="Normal"
+                  BorderThickness="1"
+                  BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
+                  Grid.Row="1"
+                  IsExpanded="{Binding SearchIsExpanded}">
+            <StackPanel Grid.Row="2">
+                <Grid FocusManager.FocusedElement="{Binding ElementName=KeywordBox}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <icons:PackIconMaterial Kind="LayersSearchOutline" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            Width="20"
+                                            Height="20"
+                                            Margin="0 0 3 0"
+                                            ToolTip="Keywords"/>
+                    <TextBox x:Name="KeywordBox" Grid.Column="1" metro:TextBoxHelper.Watermark="Keywords"  Text="{Binding QueryText, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                        metro:TextBoxHelper.ClearTextButton="True"/>
+                </Grid>
+                <Grid Margin="0 5 0 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <icons:PackIconMaterial Kind="AccountOutline"
+                                            VerticalAlignment="Center"
+                                            Width="18"
+                                            Height="18"
+                                            Margin="0 0 5 0"
+                                            ToolTip="Owner"/>
+
+                    <CheckBox Content="Search Only My Content" Grid.Column="1" IsChecked="{Binding SearchOnlyMyContent}" VerticalAlignment="Center" Height="26"/>
+
+                    <TextBox Grid.Column="2"
+                             Margin="10 0 0 0"
+                             Visibility="{Binding SearchOnlyMyContent, Converter={StaticResource boolToVisConverter}, ConverterParameter=Reverse}"
+                             metro:TextBoxHelper.Watermark="Owner" Text="{Binding OwnerText, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                             Grid.Row="1"
+                             metro:TextBoxHelper.ClearTextButton="True"/>
+                </Grid>
+                <Grid Margin="0 5 0 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <icons:PackIconFeatherIcons Kind="Hash" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Width="18"
+                                                Height="18"
+                                                Margin="0 0 5 0"
+                                                ToolTip="Items Per Page"/>
+
+                    <ComboBox SelectedItem="{Binding ItemsPerPage, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedIndex="0"
+                              HorizontalAlignment="Left"
+                              metro:TextBoxHelper.Watermark="Items Per Page"
+                              ItemStringFormat="{}{0} results per page"
+                              Grid.Column="1">
+                        <ComboBox.Items>
+                            <sys:Int32>5</sys:Int32>
+                            <sys:Int32>10</sys:Int32>
+                            <sys:Int32>15</sys:Int32>
+                            <sys:Int32>20</sys:Int32>
+                        </ComboBox.Items>
+                    </ComboBox>
+
+                    <Button Style="{StaticResource MahApps.Styles.Button.Flat}"
+                            HorizontalAlignment="Right"
+                            Padding="6 4"
+                            Grid.Column="1"
+                            IsDefault="True"
+                            Content="Search"
+                            Command="{Binding Search_Command, Mode=OneWay}"/>
+                </Grid>
+            </StackPanel>
+        </Expander>
+
+        <Border BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
+                Background="{DynamicResource MahApps.Brushes.Accent}"
+                Grid.Row="3"
+                Margin="0 5 0 0">
+            <Grid>
+                <Label Content="Results"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                            Visibility="{Binding ResultCollection, Converter={StaticResource nullToVisConverter}, ConverterParameter=Reverse}">
+                    <Button Style="{StaticResource MahApps.Styles.Button.Chromeless}" Command="{Binding PageOver_Command}" CommandParameter="Left">
+                        <icons:PackIconMaterialLight Kind="ChevronLeft"/>
+                    </Button>
+                    <TextBlock VerticalAlignment="Center" Margin="5 0" Foreground="{DynamicResource MahApps.Brushes.IdealForeground}" Opacity=".5">
+                        <Run Text="Page "/><Run Text="{Binding ResultCollection.CurrentPage, Mode=OneWay}"/><Run Text=" of "/><Run Text="{Binding ResultCollection.TotalPages, Mode=OneWay}"/>
+                    </TextBlock>
+                    <Button Style="{StaticResource MahApps.Styles.Button.Chromeless}" Command="{Binding PageOver_Command}" CommandParameter="Right">
+                        <icons:PackIconMaterialLight Kind="ChevronRight"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="4"
+                      Margin="0 5 0 0"
+                      CanContentScroll="False"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding ResultCollection.SearchResults}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type models:AgolSearchResult}">
+                        <Button Margin="0 0 0 5"
+                                Command="{Binding DataContext.Continue_Command, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}"
+                                CommandParameter="{Binding}"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"
+                                Padding="5"
+                                ToolTipService.Placement="Left"
+                                Background="{DynamicResource MahApps.Brushes.Gray10}">
+                            <Button.ToolTip>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title,StringFormat='Title: {0}'}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Name,StringFormat='Name: {0}'}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Snippet,StringFormat='Snippet: {0}'}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Owner,StringFormat='Owner: {0}'}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding ItemType,StringFormat='Type: {0}'}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Created,StringFormat='Created At: {0}'}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Modified,StringFormat='Last Modified: {0}'}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Url,StringFormat='URL: {0}'}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Button.ToolTip>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button.Chromeless}">
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Gray7}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Border BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Gray9}"
+                                        Width="150"
+                                        Height="100">
+                                    <Grid>
+                                        <metro:ProgressRing Height="35" Width="35"/>
+                                        <Image Source="{Binding ThumbnailUrl, IsAsync=True}" Stretch="Uniform" StretchDirection="Both"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="5 0 0 0" TextElement.Foreground="{DynamicResource MahApps.Brushes.IdealForeground}">
+                                    <TextBlock Text="{Binding Title}" TextWrapping="Wrap" FontSize="16"/>
+                                    <TextBlock Text="{Binding Owner, StringFormat='Owner: {0}'}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MahApps.Brushes.Gray6}" FontStyle="Italic"/>
+                                    <TextBlock Text="{Binding Created, StringFormat='Created: {0}'}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MahApps.Brushes.Gray6}" FontStyle="Italic"/>
+                                </StackPanel>
+                                <!--<Grid Grid.Column="2">
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource AncestorLevel=1, AncestorType=Grid}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    -->
+                                <!--<Button Style="{DynamicResource MahApps.Styles.Button.Chromeless}"
+                                            FontSize="20"
+                                            Margin="5 0 0 0"
+                                            Command="{Binding DataContext.Continue_Command, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}">
+                                        <icons:PackIconMaterialLight Kind="ChevronRight"
+                                                                Height="20"
+                                                                Width="20"/>
+                                    </Button>-->
+                                <!--
+                                </Grid>-->
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Text="No results..."
+                   Grid.Row="4"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   Margin="20"
+                   FontSize="18"
+                   Visibility="{Binding ShowNoResultsText, Converter={StaticResource boolToVisConverter}}"
+                   Foreground="{DynamicResource MahApps.Brushes.Gray7}"/>
+
+        <metro:ProgressRing IsActive="{Binding IsBusy}"
+                            Grid.Row="4"/>
+    </Grid>
+</UserControl>
